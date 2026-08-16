@@ -19,12 +19,14 @@ heterogeneity.
 
 Three reserving approaches are evaluated.
 
-1. **Full Bayesian model**  
-   A joint count-composition-payment model with claim-type decomposition,
-   evolving reporting patterns, hierarchical claim-type payment effects,
-   type-specific settlement development, and calendar effects.
+1. **Full Bayesian simulation model**  
+   A simulation analogue of the paper's proposed Bayesian collective reserving
+   architecture. It jointly models total claim counts, claim-type composition,
+   payment occurrence, and positive payment amounts, with temporal
+   regularization, hierarchical claim-type effects, type-specific settlement
+   development, and calendar effects.
 
-2. **Baseline Bayesian model**  
+2. **Baseline Bayesian simulation model**  
    Uses the same total-count model, but aggregates payments across claim types
    and omits claim-type payment effects, type-specific settlement development,
    and calendar effects.
@@ -33,9 +35,93 @@ Three reserving approaches are evaluated.
    An aggregate paid-loss Chain Ladder fitted to an accident-period by total
    development-period triangle.
 
-The Baseline Bayesian model is a reduced Bayesian benchmark with the same
-general count machinery but substantially less payment structure. Paid Chain
-Ladder provides a conventional aggregate reserving benchmark.
+The Full Bayesian simulation model is intentionally **not an exact copy of the
+final empirical specification used in the paper**. It preserves the core
+count--composition--payment architecture and posterior reserve propagation, but
+uses related, deliberately simplified structural choices. The Baseline Bayesian
+model provides a reduced Bayesian benchmark with the same general count
+machinery but substantially less payment structure. Paid Chain Ladder provides
+a conventional aggregate reserving benchmark.
+
+## Relationship to the Empirical Paper Specification
+
+The purpose of the simulation is to assess the proposed **modeling
+architecture**, rather than to generate data from the exact application-specific
+model and then refit that same specification.
+
+The Full Bayesian simulation model and the final empirical model share the
+following central features:
+
+- a Negative Binomial model for reported claim counts with an exposure offset
+  and regularized accident-period dynamics;
+- a multinomial decomposition of predicted claims across claim types;
+- separate Bernoulli payment-incidence and Lognormal positive-payment
+  components;
+- hierarchical or partially pooled claim-type effects;
+- explicit modeling of reporting and settlement development;
+- posterior propagation from claim counts through claim type and payments; and
+- separate posterior predictions of RBNS, IBNR, and total outstanding
+  liabilities.
+
+The exact structural implementations differ in several respects.
+
+### Claim-count layer
+
+In the empirical paper, the claim-count model uses a first-order random walk for
+the accident-period effect, a hybrid reporting-delay representation with a
+spline-regularized tail, calendar-related covariates acting on the reporting
+profile, and an additional tail-only accident-period effect for long reporting
+delays.
+
+In the simulation model, the accident-period effect is also estimated through a
+first-order random walk, but the reporting-delay structure is represented more
+simply through centered delay effects together with delay-specific linear
+changes over scaled accident time.
+
+### Claim-type composition layer
+
+In the final empirical model, baseline claim-type log-odds are decomposed into
+persistent type-specific levels and first-order random-walk temporal deviations.
+Reporting-delay selection is then represented through a regularized
+body-and-tail delay-tilt structure.
+
+In the simulation model, claim-type composition uses type-specific baseline
+log-odds, a linear accident-time change in relative type prevalence, and
+delay-specific tilts relative to reporting delay zero. Thus, the simulation
+preserves changing claim-type composition and delay selection without using the
+exact random-walk and body-tail parameterization of the empirical model.
+
+### Payment layer
+
+Both models use a hurdle Lognormal payment model. The empirical specification
+is more application-specific: it allows hierarchical claim-type deviations in
+the payment predictors, uses a hybrid fixed--spline settlement-delay structure,
+includes payment-month seasonality, and contains a smooth binned
+reporting-delay by settlement-delay interaction in positive-payment severity.
+
+The simulation model instead uses regularized global accident-period effects,
+centered claim-type payment effects, a type-by-settlement interaction, and two
+known calendar covariates representing gradual inflation and a temporary
+shock. It does not reproduce the paper's exact payment-month seasonal term,
+hybrid settlement spline, or binned reporting--payment interaction.
+
+### Dimension and purpose
+
+The synthetic experiment uses 36 accident periods, 8 reporting delays,
+10 settlement delays, and 4 claim types so that repeated full posterior fits are
+computationally feasible. The empirical application is larger and contains six
+claim types.
+
+These differences are deliberate. Several components of the final empirical
+specification---such as the hybrid settlement spline, the payment-month seasonal
+effect, and the particular reporting-delay interaction---were selected to
+represent features of the observed insurance portfolio. Reproducing all of
+those exact choices in the simulation DGP would make the exercise closer to a
+self-recovery experiment. Instead, the simulation retains the principal
+Bayesian collective reserving architecture while changing the functional form
+of several important components. This provides a controlled assessment of
+whether the architecture can adapt to synthetic claims processes that are
+related to, but not identical to, the empirical specification.
 
 # Simulation Design
 
@@ -532,7 +618,7 @@ The simple scenario is therefore a reduced-heterogeneity robustness experiment.
 It is not constructed to make the Baseline Bayesian model exactly equal to the
 data-generating mechanism.
 
-## 6. Why the DGP is not the fitted model
+## 6. Why the DGP is not the fitted simulation model
 
 The simulation is deliberately not a prior-predictive self-recovery exercise.
 
@@ -541,17 +627,19 @@ For example, the accident-period count process combines a sine curve and a
 hyperbolic-tangent transition, while the payment-incidence process combines a
 sine curve and a localized Gaussian-shaped bump.
 
-The fitted Bayesian models are not given these functional forms. Instead, they
-must learn the temporal structure from the observed valuation-date data using
-the regularized first-order random-walk components of the reserving framework.
+The fitted Bayesian simulation models are not given these functional forms.
+Instead, they must learn the temporal structure from the observed
+valuation-date data using regularized first-order random-walk effects.
 
-Similarly, the Full Bayesian model must estimate the claim-type composition,
-claim-type payment effects, type-specific settlement deviations, and calendar
-effects from the observed data.
+Similarly, the Full Bayesian simulation model must estimate claim-type
+composition, claim-type payment effects, type-specific settlement deviations,
+and calendar effects from the observed data rather than being supplied with
+their generating values.
 
-The simulation therefore evaluates whether the proposed architecture can adapt
-to a structured synthetic claims environment rather than merely recover
-parameters generated from its own priors.
+The simulation therefore evaluates whether a simulation implementation of the
+proposed architecture can adapt to a structured synthetic claims environment,
+rather than merely recover parameters generated from its own priors or from an
+identical fitted specification.
 
 # Evaluation Design
 
@@ -594,17 +682,17 @@ The principal experiment consists of **50 independently simulated portfolios**.
 
 ## Total Outstanding Liability
 
-| Method | Relative Bias (%) | MAPE vs. Oracle (%) | Normalized RMSE (%) | MAPE vs. Realized Runoff (%) |
+| Method | Relative Bias (%) | MAPE vs. Oracle (%) | Normalized RMSE (%) | Expected-Reserve MAPE vs. Realized Runoff (%) |
 |---|---:|---:|---:|---:|
 | Full Bayesian | -0.21 | 6.65 | 9.03 | 8.26 |
 | Baseline Bayesian | 5.91 | 7.65 | 9.77 | 10.35 |
 | Paid Chain Ladder | -1.26 | 15.38 | 22.62 | 14.95 |
 
-The Full Bayesian model is essentially unbiased on average for the oracle
+The Full Bayesian simulation model is essentially unbiased on average for the oracle
 expected total liability. Its oracle MAPE is **6.65%**, compared with **7.65%**
 for the Baseline Bayesian model and **15.38%** for Paid Chain Ladder.
 
-The Full Bayesian model also reduces normalized RMSE from **9.77%** under the
+The Full Bayesian simulation model also reduces normalized RMSE from **9.77%** under the
 Baseline Bayesian model to **9.03%**. Its median relative 95% predictive
 interval width is **52.1%**, compared with **70.0%** for the Baseline Bayesian
 model.
@@ -649,13 +737,13 @@ simulated portfolios**.
 
 ## Total Outstanding Liability
 
-| Method | Relative Bias (%) | MAPE vs. Oracle (%) | Normalized RMSE (%) | MAPE vs. Realized Runoff (%) |
+| Method | Relative Bias (%) | MAPE vs. Oracle (%) | Normalized RMSE (%) | Expected-Reserve MAPE vs. Realized Runoff (%) |
 |---|---:|---:|---:|---:|
 | Full Bayesian | -0.13 | 6.02 | 7.05 | 8.35 |
 | Baseline Bayesian | 12.54 | 13.24 | 15.54 | 15.89 |
 | Paid Chain Ladder | -0.87 | 15.61 | 20.23 | 17.40 |
 
-The Full Bayesian model again recovers the expected total liability with
+The Full Bayesian simulation model again recovers the expected total liability with
 negligible average bias and the lowest oracle MAPE and normalized RMSE.
 
 The purpose of this scenario is not to make the Baseline Bayesian model
@@ -752,7 +840,7 @@ and 500 retained sampling iterations per chain.
 
 # Reproducing the Simulation
 
-The analysis requires R, `cmdstanr`, and a working CmdStan installation.
+The analysis requires R, `cmdstanr`, `posterior`, `dplyr`, and a working CmdStan installation.
 
 To run the rich scenario with 50 replications:
 
@@ -785,6 +873,6 @@ The repository contains the code required to:
 - generate both synthetic scenarios;
 - construct the observed, RBNS, and IBNR regions at the valuation date;
 - calculate the oracle expected liability under the known DGP;
-- fit the Full and Baseline Bayesian models;
+- fit the Full and Baseline Bayesian simulation models;
 - calculate the Paid Chain Ladder benchmark; and
 - reproduce the summary statistics reported above.
