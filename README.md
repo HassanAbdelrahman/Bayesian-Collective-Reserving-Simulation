@@ -11,8 +11,8 @@ in the paper.
 The study is not intended to establish that one fixed Bayesian specification is
 universally optimal. Instead, it evaluates whether the proposed collective
 Bayesian framework can recover expected outstanding liabilities and generate
-well-calibrated predictive distributions when the underlying claims process
-contains several simultaneous sources of temporal, development, and claim-type
+reliable predictive distributions when the underlying claims process contains
+several simultaneous sources of temporal, development, and claim-type
 heterogeneity.
 
 ## Methods Compared
@@ -33,14 +33,13 @@ Three reserving approaches are evaluated.
    An aggregate paid-loss Chain Ladder fitted to an accident-period by total
    development-period triangle.
 
-The purpose of the Baseline Bayesian model is to provide a reduced Bayesian
-benchmark with the same general count machinery but substantially less payment
-structure. The Paid Chain Ladder provides a conventional aggregate reserving
-benchmark.
+The Baseline Bayesian model is a reduced Bayesian benchmark with the same
+general count machinery but substantially less payment structure. Paid Chain
+Ladder provides a conventional aggregate reserving benchmark.
 
-## Simulation Design
+# Simulation Design
 
-### Indexing and valuation structure
+## Indexing and valuation structure
 
 Each synthetic portfolio contains:
 
@@ -49,304 +48,477 @@ Each synthetic portfolio contains:
 - 10 settlement-delay periods; and
 - 4 claim types.
 
-Let $t=1,\ldots,36$ denote accident period, $d=0,\ldots,7$ reporting
-delay, $s=0,\ldots,9$ settlement delay, and $j=1,\ldots,4$ claim type.
-The valuation date is the end of accident period 36.
+Let $t=1,\ldots,36$ denote accident period, $d=0,\ldots,7$ reporting delay,
+$s=0,\ldots,9$ settlement delay, and $j=1,\ldots,4$ claim type. The valuation
+date is the end of accident period 36.
 
 A claim-count cell is observed when
 
-$$
-t+d \leq 36,
-$$
+```math
+t+d \le 36
+```
 
-and is IBNR when $t+d>36$. A payment cell is observed when
+and is IBNR when
 
-$$
-t+d+s \leq 36.
-$$
+```math
+t+d > 36.
+```
 
-Future payments from already reported claims form the RBNS reserve, whereas
-future payments associated with cells satisfying $t+d>36$ form the IBNR
-reserve. Because the entire future is simulated, the realized RBNS, IBNR, and
-total reserves are known exactly in each replication.
+A payment cell is observed when
 
-### 1. Exposure and reported claim counts
+```math
+t+d+s \le 36.
+```
 
-The exposure level varies smoothly over accident time:
+Future payments from already reported claims form the RBNS reserve. Future
+payments associated with claims not yet reported at valuation form the IBNR
+reserve. Because the complete future runoff is simulated, realized RBNS, IBNR,
+and total outstanding liabilities are known in every replication.
 
-$$
-e_t
-=
+## 1. Exposure and reported claim counts
+
+### Exposure
+
+Define a scaled accident-time index
+
+```math
+u_t = -1 + \frac{2(t-1)}{35}.
+```
+
+Exposure varies smoothly over accident time according to
+
+```math
+e_t =
 \exp\left[
-0.08\sin\left\{\frac{2\pi(t-1)}{12}\right\}
+0.08\sin\left(\frac{2\pi(t-1)}{12}\right)
 +0.04u_t
-\right],
-$$
+\right].
+```
 
-where $u_t$ is a linearly scaled accident-time index ranging from $-1$ to $1$.
+Thus exposure contains a modest seasonal component together with a gradual
+time trend.
 
-Reported claim counts follow a Negative Binomial distribution,
+### Total reported claim counts
 
-$$
-N_{t,d}
-\sim
-\operatorname{NegBin}_2(\lambda_{t,d},\phi_N),
-$$
+Reported claim counts are generated from an overdispersed count distribution:
 
-with
+```math
+N_{t,d} \sim \mathrm{NB2}(\lambda_{t,d},\phi_N),
+\qquad
+\phi_N = 35.
+```
 
-$$
-\log \lambda_{t,d}
+The conditional mean is
+
+```math
+\log(\lambda_{t,d})
 =
-\log e_t
+\log(e_t)
 +\mu_N
 +\alpha_t^{(N)}
 +\beta_d^{(N)}
 +\kappa_d u_t.
-$$
+```
 
-The dispersion parameter is $\phi_N=35$, and the intercept is chosen to
-produce approximately 300 claims per accident period before temporal
-variation.
+The intercept $\mu_N$ is calibrated so that the portfolio contains
+approximately 300 claims per accident period before temporal variation.
 
-The accident-period effect is deliberately nonlinear:
+### Nonlinear accident-period frequency pattern
 
-$$
+The raw accident-period frequency curve is
+
+```math
+f_t^{(N)}
+=
+0.16\sin\left(\frac{2\pi(t-1)}{18}\right)
++
+0.13\tanh\left(\frac{t-17}{4}\right).
+```
+
+It is centered before entering the count predictor:
+
+```math
 \alpha_t^{(N)}
 =
-\operatorname{center}\left[
-0.16\sin\left\{\frac{2\pi(t-1)}{18}\right\}
-+
-0.13\tanh\left\{\frac{t-17}{4}\right\}
-\right].
-$$
+f_t^{(N)}
+-
+\frac{1}{36}
+\sum_{r=1}^{36} f_r^{(N)}.
+```
 
-Thus, the simulated frequency path contains both cyclical movement and a
-smooth level transition rather than being generated from a random-walk prior.
+This produces a frequency path containing both cyclical movement and a smooth
+level transition. Importantly, the path is a fixed deterministic function in
+the simulation engine; it is not generated from the random-walk prior used by
+the fitted Bayesian model.
 
-The baseline reporting-delay probabilities are proportional to
+### Reporting-delay structure
 
-$$
-(0.58,\;0.20,\;0.09,\;0.05,\;0.035,\;0.020,\;0.015,\;0.010),
-$$
+The baseline reporting-delay probability vector is proportional to
 
-and $\beta_d^{(N)}$ is obtained by centering their logarithms.
+```math
+(0.58,\;0.20,\;0.09,\;0.05,\;0.035,\;0.020,\;0.015,\;0.010).
+```
 
-In the rich scenario, the reporting pattern also changes over accident time.
-The delay-specific slopes are the centered version of
+If these normalized probabilities are denoted by $q_d$, the reporting-delay
+main effects are
 
-$$
-(0.24,\;0.11,\;0.03,\;-0.04,\;-0.10,\;-0.15,\;-0.20,\;-0.25).
-$$
+```math
+\beta_d^{(N)}
+=
+\log(q_d)
+-
+\frac{1}{8}
+\sum_{r=0}^{7}\log(q_r).
+```
 
-Consequently, early and late reporting delays evolve differently over time.
+In the rich scenario, the reporting-delay profile also changes with accident
+time. Start from
 
-### 2. Claim-type composition
+```math
+\kappa^{*}
+=
+(0.24,\;0.11,\;0.03,\;-0.04,\;-0.10,\;-0.15,\;-0.20,\;-0.25),
+```
 
-Conditional on the total count,
+and center the vector:
 
-$$
+```math
+\kappa_d
+=
+\kappa_d^{*}
+-
+\frac{1}{8}
+\sum_{r=0}^{7}\kappa_r^{*}.
+```
+
+The interaction term $\kappa_d u_t$ therefore makes early and late reporting
+delays evolve differently over accident time.
+
+## 2. Claim-type composition
+
+Conditional on the total number of claims in an accident-reporting cell, claim
+types are generated from
+
+```math
 (N_{t,d,1},\ldots,N_{t,d,4})
 \mid N_{t,d}
 \sim
-\operatorname{Multinomial}
-\left(N_{t,d},\boldsymbol{\pi}_{t,d}\right).
-$$
+\mathrm{Multinomial}
+\left(
+N_{t,d},
+\pi_{t,d,1},\ldots,\pi_{t,d,4}
+\right).
+```
 
-The baseline type shares are
+The baseline type-share vector is
 
-$$
-(0.49,\;0.28,\;0.195,\;0.035),
-$$
+```math
+(0.49,\;0.28,\;0.195,\;0.035).
+```
 
-so the fourth claim type is deliberately sparse.
+Thus the fourth claim type is deliberately sparse.
 
-Type 1 is the reference category. For types $j=2,3,4$,
+Type 1 is the reference category. For $j=2,3,4$,
 
-$$
-\log\frac{\pi_{t,d,j}}{\pi_{t,d,1}}
+```math
+\log\left(
+\frac{\pi_{t,d,j}}{\pi_{t,d,1}}
+\right)
 =
 \gamma_j
-+a_j u_t
-+c_{d,j},
-$$
++
+a_j u_t
++
+c_{d,j}.
+```
 
-where the baseline log-odds $\gamma_j$ reproduce the shares above. The
-accident-time slopes are
+The baseline log-odds $\gamma_j$ are chosen to reproduce the baseline shares
+above. The accident-time slopes are
 
-$$
-(a_2,a_3,a_4)=(-0.18,\;0.30,\;0.12).
-$$
+```math
+(a_2,a_3,a_4)
+=
+(-0.18,\;0.30,\;0.12).
+```
 
-The reporting-delay tilts increase linearly with normalized reporting delay.
-Their terminal magnitudes are $0.22$, $-0.18$, and $0.50$ for types
-2, 3, and 4, respectively, with zero tilt at reporting delay $d=0$.
+Hence the relative prevalence of the claim types changes over accident time.
 
-The rich scenario therefore contains both changing portfolio composition over
-accident time and selection of claim type by reporting delay.
+Reporting delay also affects claim-type composition. The delay tilt for each
+non-reference type increases linearly from zero at $d=0$ to its terminal value
+at $d=7$. The terminal values are
 
-### 3. Payment occurrence
+```math
+(c_{7,2},c_{7,3},c_{7,4})
+=
+(0.22,\;-0.18,\;0.50).
+```
+
+Thus the rich scenario contains both time-varying claim-type composition and
+reporting-delay selection in claim type.
+
+## 3. Payment occurrence
 
 Payments are generated on the $(t,d,s,j)$ grid. For a cell containing $n$
-claims,
+claims, let $Z_{t,d,s,j}$ indicate whether the aggregate payment in that cell is
+positive.
 
-$$
+```math
 Z_{t,d,s,j}
 \sim
-\operatorname{Bernoulli}(p_{t,d,s,j}),
-$$
+\mathrm{Bernoulli}(p_{t,d,s,j}).
+```
 
-where $Z=1$ indicates a positive aggregate payment and
+The payment-incidence probability satisfies
 
-$$
-\operatorname{logit}(p_{t,d,s,j})
+```math
+\mathrm{logit}(p_{t,d,s,j})
 =
 \mu_p
-+\alpha_t^{(p)}
-+\beta_d^{(p)}
-+\zeta_s^{(p)}
-+\tau_j^{(p)}
-+0.48\log n.
-$$
++
+\alpha_t^{(p)}
++
+\beta_d^{(p)}
++
+\zeta_s^{(p)}
++
+\tau_j^{(p)}
++
+0.48\log(n),
+```
 
-The global intercept is $\mu_p=-2.25$.
+with
 
-The accident-period payment-incidence effect is again deterministic and
-nonlinear:
+```math
+\mu_p=-2.25.
+```
 
-$$
+### Nonlinear accident-period payment-incidence effect
+
+Define
+
+```math
+f_t^{(p)}
+=
+0.22\sin\left(\frac{2\pi(t-1)}{15}\right)
++
+0.17\exp\left[
+-\frac{1}{2}
+\left(\frac{t-20}{4}\right)^2
+\right].
+```
+
+The centered effect used in the predictor is
+
+```math
 \alpha_t^{(p)}
 =
-\operatorname{center}\left[
-0.22\sin\left\{\frac{2\pi(t-1)}{15}\right\}
-+
-0.17\exp\left\{
--\frac{1}{2}\left(\frac{t-20}{4}\right)^2
-\right\}
-\right].
-$$
+f_t^{(p)}
+-
+\frac{1}{36}
+\sum_{r=1}^{36}f_r^{(p)}.
+```
 
-The reporting-delay main effect is the centered version of
+This combines a cyclical pattern with a localized temporary increase in payment
+incidence.
 
-$$
-(0.22,\;0.14,\;0.05,\;-0.05,\;-0.16,\;-0.27,\;-0.38,\;-0.49),
-$$
+### Reporting- and settlement-delay effects
 
-and the settlement-delay main effect is the centered version of
+The reporting-delay effect is obtained by centering
 
-$$
+```math
+(0.22,\;0.14,\;0.05,\;-0.05,\;-0.16,\;-0.27,\;-0.38,\;-0.49).
+```
+
+The settlement-delay effect is obtained by centering
+
+```math
 (1.35,\;1.00,\;0.62,\;0.25,\;-0.10,\;-0.48,\;-0.86,\;-1.24,\;-1.62,\;-2.00).
-$$
+```
 
-In the rich scenario, claim types also differ in payment incidence through the
-centered type effects
+Consequently, the probability of a positive payment generally decreases with
+settlement delay.
 
-$$
+In the rich scenario, claim types also differ in payment incidence. The
+claim-type effect is the centered version of
+
+```math
 (0.25,\;0.02,\;-0.12,\;-0.38).
-$$
+```
 
-### 4. Positive payment amounts
+## 4. Positive payment amounts
 
-Conditional on a positive payment,
+Conditional on a positive aggregate payment,
 
-$$
-X_{t,d,s,j}\mid Z_{t,d,s,j}=1
+```math
+X_{t,d,s,j}
+\mid
+Z_{t,d,s,j}=1
 \sim
-\operatorname{Lognormal}
+\mathrm{Lognormal}
 \left(
 m_{t,d,s,j}-\frac{\sigma^2}{2},
 \sigma
 \right),
-$$
+```
 
-with $\sigma=0.55$. This parameterization implies
+where
 
-$$
-\operatorname{E}
+```math
+\sigma=0.55.
+```
+
+Under this parameterization,
+
+```math
+E
 \left[
-X_{t,d,s,j}\mid Z_{t,d,s,j}=1
+X_{t,d,s,j}
+\mid
+Z_{t,d,s,j}=1
 \right]
 =
 \exp(m_{t,d,s,j}).
-$$
+```
 
 The log conditional mean is
 
-$$
+```math
 m_{t,d,s,j}
 =
 \log(900)
-+\alpha_t^{(X)}
-+\beta_d^{(X)}
-+\zeta_s^{(X)}
-+\tau_j^{(X)}
-+h_{j,s}
-+\delta_1 C^{(1)}_{t+d+s}
-+\delta_2 C^{(2)}_{t+d+s}
-+\log n.
-$$
++
+\alpha_t^{(X)}
++
+\beta_d^{(X)}
++
+\zeta_s^{(X)}
++
+\tau_j^{(X)}
++
+h_{j,s}
++
+\delta_1 C^{(1)}_{t+d+s}
++
+\delta_2 C^{(2)}_{t+d+s}
++
+\log(n).
+```
 
-The accident-period severity effect is
+The final $\log(n)$ term makes the conditional mean aggregate payment scale
+with the number of claims in the cell.
 
-$$
+### Accident-period severity effect
+
+Define
+
+```math
+f_t^{(X)}
+=
+0.12\sin\left(\frac{2\pi(t-1)}{20}\right)
++
+0.15u_t.
+```
+
+The centered effect is
+
+```math
 \alpha_t^{(X)}
 =
-\operatorname{center}\left[
-0.12\sin\left\{\frac{2\pi(t-1)}{20}\right\}
-+0.15u_t
-\right].
-$$
+f_t^{(X)}
+-
+\frac{1}{36}
+\sum_{r=1}^{36}f_r^{(X)}.
+```
 
-The reporting-delay effect is the centered version of
+### Reporting-delay severity effect
 
-$$
-(-0.10,\;-0.04,\;0.02,\;0.07,\;0.12,\;0.17,\;0.21,\;0.25),
-$$
+The reporting-delay severity effect is the centered version of
 
-while the settlement-delay effect is generated from
+```math
+(-0.10,\;-0.04,\;0.02,\;0.07,\;0.12,\;0.17,\;0.21,\;0.25).
+```
 
-$$
+### Settlement-delay severity effect
+
+For settlement delay $s$, define
+
+```math
+g_s
+=
 -0.13s
--0.18\log(1+s)
+-
+0.18\log(1+s)
 +
-0.24\exp\left\{
--\frac{1}{2}\left(\frac{s-2}{1.25}\right)^2
-\right\},
-$$
+0.24\exp\left[
+-\frac{1}{2}
+\left(\frac{s-2}{1.25}\right)^2
+\right].
+```
 
-and is centered across settlement periods.
+The effect entering the predictor is
 
-The rich scenario also contains claim-type severity effects given by the
-centered values
+```math
+\zeta_s^{(X)}
+=
+g_s
+-
+\frac{1}{10}
+\sum_{r=0}^{9}g_r.
+```
 
-$$
+This produces an overall declining settlement profile together with a modest
+early-settlement bump.
+
+### Claim-type effects and type-specific settlement development
+
+In the rich scenario, the claim-type positive-payment effects are obtained by
+centering
+
+```math
 (-0.18,\;0.04,\;0.24,\;0.58).
-$$
+```
 
-The term $h_{j,s}$ introduces type-specific settlement trajectories. These
-are generated from four distinct deterministic shapes and then double-centered
-across claim type and settlement delay so that they represent interaction
-deviations rather than shifts in the corresponding main effects.
+The interaction $h_{j,s}$ introduces four different claim-type settlement
+shapes. The raw deterministic type-specific settlement curves are
+double-centered across claim type and settlement delay before entering the
+positive-payment predictor. This makes $h_{j,s}$ an interaction deviation rather
+than another claim-type or settlement-delay main effect.
 
-Finally, two calendar covariates enter the positive-payment mean:
+### Calendar effects
 
-- a centered linear calendar-time trend representing gradual inflation; and
-- a centered temporary-shock indicator active over four consecutive calendar
-  periods.
+Let $k=t+d+s$ denote calendar period.
+
+Two calendar variables affect positive payment size:
+
+1. a centered linear calendar-time index, representing gradual inflation; and
+2. a centered indicator for a temporary four-period calendar shock.
 
 Their coefficients are
 
-$$
-(\delta_1,\delta_2)=(0.22,\;0.30).
-$$
+```math
+(\delta_1,\delta_2)
+=
+(0.22,\;0.30).
+```
 
-### 5. Rich and simple scenarios
+Thus positive payments are affected both by gradual calendar inflation and by a
+temporary external disturbance.
 
-The **rich scenario** uses all of the structures described above.
+## 5. Rich and simple scenarios
 
-The optional **simple scenario** retains the nonlinear accident-time effects,
-reporting-delay main effects, settlement-delay main effects, overdispersed
-counts, hurdle payments, and unequal baseline claim-type shares, but removes:
+The **rich scenario** uses all structures described above.
+
+The **simple scenario** retains:
+
+- nonlinear accident-time count effects;
+- nonlinear accident-time payment effects;
+- reporting-delay main effects;
+- settlement-delay main effects;
+- overdispersed claim counts;
+- the hurdle payment mechanism; and
+- unequal baseline claim-type shares.
+
+It removes:
 
 - evolution of the reporting-delay profile over accident time;
 - time variation in claim-type composition;
@@ -357,73 +529,70 @@ counts, hurdle payments, and unequal baseline claim-type shares, but removes:
 - calendar inflation and temporary-shock effects.
 
 The simple scenario is therefore a reduced-heterogeneity robustness experiment.
-It is not intended to make the Baseline Bayesian model the exact
-data-generating model.
+It is not constructed to make the Baseline Bayesian model exactly equal to the
+data-generating mechanism.
 
-### 6. Relationship between the DGP and fitted Bayesian models
+## 6. Why the DGP is not the fitted model
 
 The simulation is deliberately not a prior-predictive self-recovery exercise.
-The deterministic temporal curves above are fixed functions chosen by the
-simulation designer; they are not generated by drawing random-walk effects from
-the fitted Bayesian models' priors.
 
-The fitted Bayesian models must infer these temporal patterns from the
-valuation-date data. In particular, the Bayesian models represent accident-time
-effects using regularized first-order random walks rather than being supplied
-with the true sinusoidal, hyperbolic-tangent, Gaussian-bump, or linear
-functional forms used by the simulation engine.
+The temporal curves in the simulation engine are fixed deterministic functions.
+For example, the accident-period count process combines a sine curve and a
+hyperbolic-tangent transition, while the payment-incidence process combines a
+sine curve and a localized Gaussian-shaped bump.
 
-The Full Bayesian model additionally estimates claim-type composition,
+The fitted Bayesian models are not given these functional forms. Instead, they
+must learn the temporal structure from the observed valuation-date data using
+the regularized first-order random-walk components of the reserving framework.
+
+Similarly, the Full Bayesian model must estimate the claim-type composition,
 claim-type payment effects, type-specific settlement deviations, and calendar
-effects. The Baseline Bayesian model aggregates payments across claim types and
-omits these richer payment structures.
+effects from the observed data.
 
-This design makes the simulation a test of whether the proposed architecture can
-adapt to a structured synthetic claims environment, rather than simply recover
-parameters drawn from its own prior distribution.
+The simulation therefore evaluates whether the proposed architecture can adapt
+to a structured synthetic claims environment rather than merely recover
+parameters generated from its own priors.
 
-## Evaluation Design
+# Evaluation Design
 
 For each independently generated synthetic portfolio, only information
 observable at the valuation date is supplied to the fitted reserving models.
 
-Because the data-generating process is known, the simulation permits two
-different validation targets.
+Because the DGP is known, two distinct validation targets are available.
 
-### Expected-liability recovery
+## Expected-liability recovery
 
 The primary target is the **oracle expected outstanding liability** under the
 known DGP.
 
-The RBNS expectation is evaluated exactly conditional on the reported counts.
-The IBNR expectation integrates over future unreported claim counts and
+The RBNS expectation is calculated conditional on the observed reported claim
+counts. The IBNR expectation integrates over future unreported claim counts and
 claim-type composition using Monte Carlo integration under the known DGP.
 
-For this target, we report:
+For oracle expected liability, we report:
 
 - relative bias;
 - mean absolute percentage error (MAPE);
 - RMSE; and
 - normalized RMSE.
 
-### Posterior predictive performance
+## Posterior predictive performance
 
-A separate future runoff is generated in every replication. For the Bayesian
-models we additionally report:
+A separate future runoff is simulated in each replication. For the Bayesian
+models we also report:
 
 - predictive-median MAPE against realized runoff;
 - empirical coverage of 95% posterior predictive intervals; and
 - median relative predictive interval width.
 
-The distinction is important: oracle-based criteria assess recovery of the
-conditional expected liability, whereas realized-runoff criteria additionally
-reflect future process variation.
+Oracle-based criteria assess recovery of the conditional expected liability.
+Realized-runoff criteria additionally contain future process variation.
 
-## Main Results: Rich Scenario
+# Main Results: Rich Scenario
 
 The principal experiment consists of **50 independently simulated portfolios**.
 
-### Total Outstanding Liability
+## Total Outstanding Liability
 
 | Method | Relative Bias (%) | MAPE vs. Oracle (%) | Normalized RMSE (%) | MAPE vs. Realized Runoff (%) |
 |---|---:|---:|---:|---:|
@@ -432,8 +601,8 @@ The principal experiment consists of **50 independently simulated portfolios**.
 | Paid Chain Ladder | -1.26 | 15.38 | 22.62 | 14.95 |
 
 The Full Bayesian model is essentially unbiased on average for the oracle
-expected total liability. Its MAPE is **6.65%**, compared with **7.65%** for
-the Baseline Bayesian model and **15.38%** for Paid Chain Ladder.
+expected total liability. Its oracle MAPE is **6.65%**, compared with **7.65%**
+for the Baseline Bayesian model and **15.38%** for Paid Chain Ladder.
 
 The Full Bayesian model also reduces normalized RMSE from **9.77%** under the
 Baseline Bayesian model to **9.03%**. Its median relative 95% predictive
@@ -441,11 +610,11 @@ interval width is **52.1%**, compared with **70.0%** for the Baseline Bayesian
 model.
 
 Both Bayesian specifications contain the realized total runoff in their 95%
-posterior predictive intervals in all 50 rich-scenario replications. With only
-50 replications, this should not be interpreted as evidence of exact nominal
-coverage.
+posterior predictive intervals in all 50 rich-scenario replications. With 50
+replications, this high empirical coverage should not be interpreted as
+evidence of exact nominal calibration.
 
-### Component-Level Recovery
+## Component-Level Recovery
 
 | Model | Quantity | Relative Bias (%) | MAPE vs. Oracle (%) | Predictive-Median MAPE vs. Realized (%) | 95% Predictive Coverage (%) |
 |---|---|---:|---:|---:|---:|
@@ -458,19 +627,27 @@ coverage.
 | Baseline Bayesian | IBNR count | 1.67 | 5.66 | 7.42 | 98 |
 | Baseline Bayesian | Total | 5.91 | 7.65 | 9.41 | 100 |
 
-The IBNR-count results are nearly identical across the two Bayesian models,
-which is expected because they use the same general aggregate count structure.
-The additional gains from the Full Bayesian model arise primarily in the
-payment layer. In particular, the Full model removes most of the positive RBNS
-and total-reserve bias observed under the reduced payment specification while
-retaining accurate IBNR-count prediction.
+The IBNR-count results are nearly identical across the two Bayesian
+specifications, as expected because they use the same general aggregate count
+structure.
 
-## Additional Results: Simple Scenario
+The richer Full Bayesian payment model primarily improves the monetary reserve
+components. It reduces RBNS oracle MAPE from **7.79%** to **6.37%** and removes
+most of the positive RBNS bias. For IBNR, oracle MAPE is similar under the two
+models (**10.51%** versus **10.20%**), but the Full model reduces relative bias
+from **6.29%** to **-0.42%**, lowers RMSE, and improves predictive-median MAPE
+against realized runoff from **15.39%** to **12.81%**.
 
-The reduced-heterogeneity scenario was also evaluated over **50 independently
+Thus the simulation does not show uniform dominance on every component metric,
+but the Full specification provides the strongest overall recovery of the total
+outstanding liability.
+
+# Additional Results: Simple Scenario
+
+The reduced-heterogeneity scenario was also evaluated using **50 independently
 simulated portfolios**.
 
-### Total Outstanding Liability
+## Total Outstanding Liability
 
 | Method | Relative Bias (%) | MAPE vs. Oracle (%) | Normalized RMSE (%) | MAPE vs. Realized Runoff (%) |
 |---|---:|---:|---:|---:|
@@ -479,17 +656,18 @@ simulated portfolios**.
 | Paid Chain Ladder | -0.87 | 15.61 | 20.23 | 17.40 |
 
 The Full Bayesian model again recovers the expected total liability with
-negligible average bias and the lowest MAPE and normalized RMSE. The purpose of
-this scenario is not to make the Baseline Bayesian model correctly specified;
-rather, it removes the principal time-varying claim-type and calendar
-heterogeneity while retaining a collective hurdle-payment process generated at
-the claim-type cell level.
+negligible average bias and the lowest oracle MAPE and normalized RMSE.
 
-The 95% posterior predictive interval covers realized total runoff in all 50
-replications for the Full Bayesian model and in 98% of replications for the
+The purpose of this scenario is not to make the Baseline Bayesian model
+correctly specified. Instead, it removes the principal time-varying claim-type
+and calendar heterogeneity while retaining a collective hurdle-payment process
+generated on the claim-type cell grid.
+
+The 95% posterior predictive interval contains the realized total runoff in all
+50 replications for the Full Bayesian model and in 98% of replications for the
 Baseline Bayesian model.
 
-### Component-Level Recovery
+## Component-Level Recovery
 
 | Model | Quantity | Relative Bias (%) | MAPE vs. Oracle (%) | Predictive-Median MAPE vs. Realized (%) | 95% Predictive Coverage (%) |
 |---|---|---:|---:|---:|---:|
@@ -504,32 +682,32 @@ Baseline Bayesian model.
 
 The simple-scenario count results are again almost identical across the two
 Bayesian specifications. Differences in reserve performance therefore arise
-from the payment model rather than from materially different IBNR-count
+from the payment layer rather than from materially different IBNR-count
 predictions.
 
-## Interpretation
+# Interpretation
 
-The simulation results are not intended to establish universal superiority of
-the Full Bayesian specification. Any simulation conclusion is necessarily
-conditional on the chosen DGP.
+The simulation is not intended to establish universal superiority of the Full
+Bayesian specification. Any simulation conclusion is necessarily conditional on
+the chosen DGP.
 
 The principal conclusions are narrower:
 
 1. the proposed framework can recover expected RBNS, IBNR, and total
-   outstanding liabilities with low average bias under a claims process
-   containing several simultaneous forms of temporal and claim-type
-   heterogeneity;
-2. the IBNR-count component is recovered accurately under both Bayesian
+   outstanding liabilities with low average bias under a synthetic claims
+   process containing simultaneous temporal, development, claim-type, and
+   calendar structure;
+2. IBNR claim counts are recovered accurately under both Bayesian
    specifications;
-3. richer payment structure materially improves reserve recovery when the
-   synthetic process contains claim-type and calendar structure; and
+3. the richer payment architecture improves overall reserve recovery,
+   particularly for RBNS and total outstanding liabilities; and
 4. the framework continues to perform well in the reduced-heterogeneity
    scenario.
 
 The simulation therefore complements, rather than replaces, the rolling
 out-of-sample empirical validation reported in the paper.
 
-## Convergence and Computation
+# Convergence and Computation
 
 For the 50 rich-scenario replications:
 
@@ -540,14 +718,14 @@ For the 50 rich-scenario replications:
 
 For the 50 simple-scenario replications:
 
-- both Bayesian models again produced zero divergent transitions in total;
+- both Bayesian models produced zero divergent transitions in total;
 - the maximum recorded R-hat was approximately 1.018 for the Full Bayesian
   model and 1.014 for the Baseline Bayesian model.
 
 The final fitting profile uses four chains per Bayesian model, with 500 warm-up
 and 500 retained sampling iterations per chain.
 
-## Repository Structure
+# Repository Structure
 
 ```text
 .
@@ -572,17 +750,17 @@ and 500 retained sampling iterations per chain.
             └── total_reserve_comparison.csv
 ```
 
-## Reproducing the Simulation
+# Reproducing the Simulation
 
 The analysis requires R, `cmdstanr`, and a working CmdStan installation.
 
-To run the principal rich scenario with 50 replications:
+To run the rich scenario with 50 replications:
 
 ```bash
 bash run_simulation.sh 50 rich 2 final
 ```
 
-To run the reduced-heterogeneity scenario:
+To run the simple scenario with 50 replications:
 
 ```bash
 bash run_simulation.sh 50 simple 2 final
@@ -597,10 +775,12 @@ results/rich/summary/component_recovery.csv
 
 with corresponding outputs under `results/simple/summary/`.
 
-## Reproducibility
+# Reproducibility
 
 Replication-specific data-generating and MCMC seeds are deterministic functions
-of the replication index. The repository contains the code required to:
+of the replication index.
+
+The repository contains the code required to:
 
 - generate both synthetic scenarios;
 - construct the observed, RBNS, and IBNR regions at the valuation date;
