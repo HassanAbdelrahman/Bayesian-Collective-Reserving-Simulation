@@ -42,31 +42,31 @@ benchmark.
 
 ### Indexing and valuation structure
 
-Each synthetic portfolio contains
+Each synthetic portfolio contains:
 
 - 36 accident periods;
 - 8 reporting-delay periods;
 - 10 settlement-delay periods; and
 - 4 claim types.
 
-Let \(t=1,\ldots,36\) denote accident period, \(d=0,\ldots,7\) reporting
-delay, \(s=0,\ldots,9\) settlement delay, and \(j=1,\ldots,4\) claim type.
+Let $t=1,\ldots,36$ denote accident period, $d=0,\ldots,7$ reporting
+delay, $s=0,\ldots,9$ settlement delay, and $j=1,\ldots,4$ claim type.
 The valuation date is the end of accident period 36.
 
 A claim-count cell is observed when
 
-\[
+$$
 t+d \leq 36,
-\]
+$$
 
-and is IBNR when \(t+d>36\). A payment cell is observed when
+and is IBNR when $t+d>36$. A payment cell is observed when
 
-\[
+$$
 t+d+s \leq 36.
-\]
+$$
 
 Future payments from already reported claims form the RBNS reserve, whereas
-future payments associated with cells satisfying \(t+d>36\) form the IBNR
+future payments associated with cells satisfying $t+d>36$ form the IBNR
 reserve. Because the entire future is simulated, the realized RBNS, IBNR, and
 total reserves are known exactly in each replication.
 
@@ -74,29 +74,28 @@ total reserves are known exactly in each replication.
 
 The exposure level varies smoothly over accident time:
 
-\[
+$$
 e_t
 =
 \exp\left[
 0.08\sin\left\{\frac{2\pi(t-1)}{12}\right\}
 +0.04u_t
 \right],
-\]
+$$
 
-where \(u_t\) is a linearly scaled accident-time index ranging from \(-1\) to
-\(1\).
+where $u_t$ is a linearly scaled accident-time index ranging from $-1$ to $1$.
 
 Reported claim counts follow a Negative Binomial distribution,
 
-\[
+$$
 N_{t,d}
 \sim
 \operatorname{NegBin}_2(\lambda_{t,d},\phi_N),
-\]
+$$
 
 with
 
-\[
+$$
 \log \lambda_{t,d}
 =
 \log e_t
@@ -104,15 +103,15 @@ with
 +\alpha_t^{(N)}
 +\beta_d^{(N)}
 +\kappa_d u_t.
-\]
+$$
 
-The dispersion parameter is \(\phi_N=35\), and the intercept is chosen to
+The dispersion parameter is $\phi_N=35$, and the intercept is chosen to
 produce approximately 300 claims per accident period before temporal
 variation.
 
 The accident-period effect is deliberately nonlinear:
 
-\[
+$$
 \alpha_t^{(N)}
 =
 \operatorname{center}\left[
@@ -120,25 +119,25 @@ The accident-period effect is deliberately nonlinear:
 +
 0.13\tanh\left\{\frac{t-17}{4}\right\}
 \right].
-\]
+$$
 
 Thus, the simulated frequency path contains both cyclical movement and a
 smooth level transition rather than being generated from a random-walk prior.
 
 The baseline reporting-delay probabilities are proportional to
 
-\[
+$$
 (0.58,\;0.20,\;0.09,\;0.05,\;0.035,\;0.020,\;0.015,\;0.010),
-\]
+$$
 
-and \(\beta_d^{(N)}\) is obtained by centering their logarithms.
+and $\beta_d^{(N)}$ is obtained by centering their logarithms.
 
 In the rich scenario, the reporting pattern also changes over accident time.
 The delay-specific slopes are the centered version of
 
-\[
+$$
 (0.24,\;0.11,\;0.03,\;-0.04,\;-0.10,\;-0.15,\;-0.20,\;-0.25).
-\]
+$$
 
 Consequently, early and late reporting delays evolve differently over time.
 
@@ -146,60 +145,60 @@ Consequently, early and late reporting delays evolve differently over time.
 
 Conditional on the total count,
 
-\[
+$$
 (N_{t,d,1},\ldots,N_{t,d,4})
 \mid N_{t,d}
 \sim
 \operatorname{Multinomial}
 \left(N_{t,d},\boldsymbol{\pi}_{t,d}\right).
-\]
+$$
 
 The baseline type shares are
 
-\[
+$$
 (0.49,\;0.28,\;0.195,\;0.035),
-\]
+$$
 
 so the fourth claim type is deliberately sparse.
 
-Type 1 is the reference category. For types \(j=2,3,4\),
+Type 1 is the reference category. For types $j=2,3,4$,
 
-\[
+$$
 \log\frac{\pi_{t,d,j}}{\pi_{t,d,1}}
 =
 \gamma_j
 +a_j u_t
 +c_{d,j},
-\]
+$$
 
-where the baseline log-odds \(\gamma_j\) reproduce the shares above. The
+where the baseline log-odds $\gamma_j$ reproduce the shares above. The
 accident-time slopes are
 
-\[
+$$
 (a_2,a_3,a_4)=(-0.18,\;0.30,\;0.12).
-\]
+$$
 
 The reporting-delay tilts increase linearly with normalized reporting delay.
-Their terminal magnitudes are \(0.22\), \(-0.18\), and \(0.50\) for types
-2, 3, and 4, respectively, with zero tilt at reporting delay \(d=0\).
+Their terminal magnitudes are $0.22$, $-0.18$, and $0.50$ for types
+2, 3, and 4, respectively, with zero tilt at reporting delay $d=0$.
 
 The rich scenario therefore contains both changing portfolio composition over
 accident time and selection of claim type by reporting delay.
 
 ### 3. Payment occurrence
 
-Payments are generated on the
-\((t,d,s,j)\) grid. For a cell containing \(n\) claims,
+Payments are generated on the $(t,d,s,j)$ grid. For a cell containing $n$
+claims,
 
-\[
+$$
 Z_{t,d,s,j}
 \sim
 \operatorname{Bernoulli}(p_{t,d,s,j}),
-\]
+$$
 
-where \(Z=1\) indicates a positive aggregate payment and
+where $Z=1$ indicates a positive aggregate payment and
 
-\[
+$$
 \operatorname{logit}(p_{t,d,s,j})
 =
 \mu_p
@@ -208,14 +207,14 @@ where \(Z=1\) indicates a positive aggregate payment and
 +\zeta_s^{(p)}
 +\tau_j^{(p)}
 +0.48\log n.
-\]
+$$
 
-The global intercept is \(\mu_p=-2.25\).
+The global intercept is $\mu_p=-2.25$.
 
 The accident-period payment-incidence effect is again deterministic and
 nonlinear:
 
-\[
+$$
 \alpha_t^{(p)}
 =
 \operatorname{center}\left[
@@ -225,32 +224,32 @@ nonlinear:
 -\frac{1}{2}\left(\frac{t-20}{4}\right)^2
 \right\}
 \right].
-\]
+$$
 
 The reporting-delay main effect is the centered version of
 
-\[
+$$
 (0.22,\;0.14,\;0.05,\;-0.05,\;-0.16,\;-0.27,\;-0.38,\;-0.49),
-\]
+$$
 
 and the settlement-delay main effect is the centered version of
 
-\[
+$$
 (1.35,\;1.00,\;0.62,\;0.25,\;-0.10,\;-0.48,\;-0.86,\;-1.24,\;-1.62,\;-2.00).
-\]
+$$
 
 In the rich scenario, claim types also differ in payment incidence through the
 centered type effects
 
-\[
+$$
 (0.25,\;0.02,\;-0.12,\;-0.38).
-\]
+$$
 
 ### 4. Positive payment amounts
 
 Conditional on a positive payment,
 
-\[
+$$
 X_{t,d,s,j}\mid Z_{t,d,s,j}=1
 \sim
 \operatorname{Lognormal}
@@ -258,19 +257,22 @@ X_{t,d,s,j}\mid Z_{t,d,s,j}=1
 m_{t,d,s,j}-\frac{\sigma^2}{2},
 \sigma
 \right),
-\]
+$$
 
-with \(\sigma=0.55\). This parameterization implies
+with $\sigma=0.55$. This parameterization implies
 
-\[
-E[X_{t,d,s,j}\mid Z_{t,d,s,j}=1]
+$$
+\operatorname{E}
+\left[
+X_{t,d,s,j}\mid Z_{t,d,s,j}=1
+\right]
 =
 \exp(m_{t,d,s,j}).
-\]
+$$
 
 The log conditional mean is
 
-\[
+$$
 m_{t,d,s,j}
 =
 \log(900)
@@ -282,46 +284,46 @@ m_{t,d,s,j}
 +\delta_1 C^{(1)}_{t+d+s}
 +\delta_2 C^{(2)}_{t+d+s}
 +\log n.
-\]
+$$
 
 The accident-period severity effect is
 
-\[
+$$
 \alpha_t^{(X)}
 =
 \operatorname{center}\left[
 0.12\sin\left\{\frac{2\pi(t-1)}{20}\right\}
 +0.15u_t
 \right].
-\]
+$$
 
 The reporting-delay effect is the centered version of
 
-\[
+$$
 (-0.10,\;-0.04,\;0.02,\;0.07,\;0.12,\;0.17,\;0.21,\;0.25),
-\]
+$$
 
 while the settlement-delay effect is generated from
 
-\[
+$$
 -0.13s
 -0.18\log(1+s)
 +
 0.24\exp\left\{
 -\frac{1}{2}\left(\frac{s-2}{1.25}\right)^2
 \right\},
-\]
+$$
 
 and is centered across settlement periods.
 
 The rich scenario also contains claim-type severity effects given by the
 centered values
 
-\[
+$$
 (-0.18,\;0.04,\;0.24,\;0.58).
-\]
+$$
 
-The term \(h_{j,s}\) introduces type-specific settlement trajectories. These
+The term $h_{j,s}$ introduces type-specific settlement trajectories. These
 are generated from four distinct deterministic shapes and then double-centered
 across claim type and settlement delay so that they represent interaction
 deviations rather than shifts in the corresponding main effects.
@@ -334,9 +336,9 @@ Finally, two calendar covariates enter the positive-payment mean:
 
 Their coefficients are
 
-\[
+$$
 (\delta_1,\delta_2)=(0.22,\;0.30).
-\]
+$$
 
 ### 5. Rich and simple scenarios
 
@@ -344,7 +346,7 @@ The **rich scenario** uses all of the structures described above.
 
 The optional **simple scenario** retains the nonlinear accident-time effects,
 reporting-delay main effects, settlement-delay main effects, overdispersed
-counts, hurdle payments, and unequal baseline claim-type shares, but removes
+counts, hurdle payments, and unequal baseline claim-type shares, but removes:
 
 - evolution of the reporting-delay profile over accident time;
 - time variation in claim-type composition;
@@ -397,7 +399,7 @@ The RBNS expectation is evaluated exactly conditional on the reported counts.
 The IBNR expectation integrates over future unreported claim counts and
 claim-type composition using Monte Carlo integration under the known DGP.
 
-For this target, we report
+For this target, we report:
 
 - relative bias;
 - mean absolute percentage error (MAPE);
@@ -407,7 +409,7 @@ For this target, we report
 ### Posterior predictive performance
 
 A separate future runoff is generated in every replication. For the Bayesian
-models we additionally report
+models we additionally report:
 
 - predictive-median MAPE against realized runoff;
 - empirical coverage of 95% posterior predictive intervals; and
@@ -586,7 +588,7 @@ To run the reduced-heterogeneity scenario:
 bash run_simulation.sh 50 simple 2 final
 ```
 
-The summary files are written to
+The summary files are written to:
 
 ```text
 results/rich/summary/total_reserve_comparison.csv
@@ -598,7 +600,7 @@ with corresponding outputs under `results/simple/summary/`.
 ## Reproducibility
 
 Replication-specific data-generating and MCMC seeds are deterministic functions
-of the replication index. The repository contains the code required to
+of the replication index. The repository contains the code required to:
 
 - generate both synthetic scenarios;
 - construct the observed, RBNS, and IBNR regions at the valuation date;
