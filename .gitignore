@@ -1,0 +1,27 @@
+# R session files
+.Rhistory
+.RData
+.Ruserdata
+.Rproj.user/
+
+# Large replication-level simulation outputs
+results/*/rep_*/
+results/*/logs/
+
+# Saved R objects
+*.rds
+*.RDS
+
+# CmdStan generated files
+*.exe
+*.hpp
+*.o
+
+# Log files
+*.log
+*.out
+*.err
+
+# Operating-system files
+.DS_Store
+Thumbs.db
